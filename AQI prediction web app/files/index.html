@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AQI Monitor — Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+
+<!-- ═══════════ SIDEBAR ═══════════ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
+        <path d="M12 7v5l3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="12" cy="3" r="1" fill="currentColor"/>
+        <circle cx="12" cy="21" r="1" fill="currentColor"/>
+        <circle cx="3" cy="12" r="1" fill="currentColor"/>
+        <circle cx="21" cy="12" r="1" fill="currentColor"/>
+      </svg>
+    </div>
+    <span class="logo-text">AQI<strong>Monitor</strong></span>
+  </div>
+
+  <nav class="sidebar-nav">
+    <button class="nav-item active" data-page="dashboard">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+      <span>Overview</span>
+    </button>
+    <button class="nav-item" data-page="predict">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19v-6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2zm0 0V9a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v10m-6 0a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2m0 0V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2z"/></svg>
+      <span>Predict AQI</span>
+    </button>
+    <button class="nav-item" data-page="cities">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>City Analysis</span>
+    </button>
+    <button class="nav-item" data-page="pollutants">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-15.38c-3.72 4.35-8.94 5.66-16.88 5.85m19.5 1.9c-3.5-.93-6.63-.82-8.94 0-2.58.92-5.01 2.86-7.44 6.32"/></svg>
+      <span>Pollutants</span>
+    </button>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="data-badge">
+      <div class="pulse-dot"></div>
+      <span>Live Data</span>
+    </div>
+  </div>
+</aside>
+
+<!-- ═══════════ MAIN ═══════════ -->
+<main class="main-content">
+
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <h1 class="page-title" id="pageTitle">Air Quality Overview</h1>
+      <span class="page-sub" id="pageSub">India — Real-time station monitoring</span>
+    </div>
+    <div class="topbar-right">
+      <div class="update-tag">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.18-3.27L23 10"/></svg>
+        Updated today
+      </div>
+    </div>
+  </header>
+
+  <!-- ── PAGE: OVERVIEW ─────────────────────────────── -->
+  <section class="page active" id="page-dashboard">
+
+    <!-- KPI Cards -->
+    <div class="kpi-row">
+      <div class="kpi-card kpi-blue">
+        <div class="kpi-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div>
+        <div class="kpi-body">
+          <span class="kpi-label">Cities Monitored</span>
+          <span class="kpi-value" id="kCities">—</span>
+          <span class="kpi-sub" id="kStates">— states</span>
+        </div>
+        <div class="kpi-sparkline"></div>
+      </div>
+      <div class="kpi-card kpi-teal">
+        <div class="kpi-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+        <div class="kpi-body">
+          <span class="kpi-label">Avg PM2.5 (µg/m³)</span>
+          <span class="kpi-value" id="kPm25">—</span>
+          <span class="kpi-sub kpi-status" id="kPm25Status">—</span>
+        </div>
+      </div>
+      <div class="kpi-card kpi-red">
+        <div class="kpi-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg></div>
+        <div class="kpi-body">
+          <span class="kpi-label">Most Polluted City</span>
+          <span class="kpi-value kpi-city" id="kMost">—</span>
+          <span class="kpi-sub">Highest avg PM2.5</span>
+        </div>
+      </div>
+      <div class="kpi-card kpi-green">
+        <div class="kpi-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+        <div class="kpi-body">
+          <span class="kpi-label">Cleanest City</span>
+          <span class="kpi-value kpi-city" id="kBest">—</span>
+          <span class="kpi-sub">Lowest avg PM2.5</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Row 1 -->
+    <div class="chart-row">
+      <div class="chart-card chart-wide">
+        <div class="chart-header">
+          <div>
+            <h3>Top Cities by Pollutant</h3>
+            <p>Highest average concentrations by city</p>
+          </div>
+          <div class="chart-controls">
+            <button class="chip active" data-pol="PM2.5">PM2.5</button>
+            <button class="chip" data-pol="PM10">PM10</button>
+            <button class="chip" data-pol="NO2">NO2</button>
+            <button class="chip" data-pol="OZONE">Ozone</button>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="cityChart"></canvas></div>
+      </div>
+
+      <div class="chart-card chart-narrow">
+        <div class="chart-header">
+          <div>
+            <h3>Pollutant Share</h3>
+            <p>Avg concentration by type</p>
+          </div>
+        </div>
+        <div class="chart-wrap donut-wrap"><canvas id="donutChart"></canvas></div>
+        <div class="donut-legend" id="donutLegend"></div>
+      </div>
+    </div>
+
+    <!-- Charts Row 2 -->
+    <div class="chart-row">
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <h3>Pollutant Avg vs Min/Max</h3>
+            <p>Range across all monitoring stations</p>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="rangeChart"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <h3>Most Polluted States</h3>
+            <p>Average PM2.5 + PM10 by state</p>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="stateChart"></canvas></div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ── PAGE: PREDICT ─────────────────────────────── -->
+  <section class="page" id="page-predict">
+    <div class="predict-layout">
+
+      <div class="predict-form-card">
+        <h2 class="section-title">Enter Pollutant Readings</h2>
+        <p class="section-sub">Fill in observed values and click Predict to get the AQI estimate from our Random Forest model.</p>
+
+        <form id="aqi-form" autocomplete="off">
+          <div class="predict-row">
+            <div class="field">
+              <label>City</label>
+              <select id="city" required>
+                <option value="" disabled selected>Select city…</option>
+                {% for city in cities %}
+                <option value="{{ city }}">{{ city }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="field">
+              <label>Observation Date</label>
+              <input type="date" id="date" required />
+            </div>
+          </div>
+
+          <div class="pollutant-grid">
+            <div class="field">
+              <label>PM2.5 <em>µg/m³</em></label>
+              <input type="number" id="pm25" step="0.01" placeholder="e.g. 50.5" required />
+            </div>
+            <div class="field">
+              <label>PM10 <em>µg/m³</em></label>
+              <input type="number" id="pm10" step="0.01" placeholder="e.g. 100.2" required />
+            </div>
+            <div class="field">
+              <label>NO2 <em>µg/m³</em></label>
+              <input type="number" id="no2" step="0.01" placeholder="e.g. 45.0" required />
+            </div>
+            <div class="field">
+              <label>CO <em>mg/m³</em></label>
+              <input type="number" id="co" step="0.01" placeholder="e.g. 1.2" required />
+            </div>
+            <div class="field">
+              <label>SO2 <em>µg/m³</em></label>
+              <input type="number" id="so2" step="0.01" placeholder="e.g. 15.0" required />
+            </div>
+            <div class="field">
+              <label>O3 <em>µg/m³</em></label>
+              <input type="number" id="o3" step="0.01" placeholder="e.g. 55.0" required />
+            </div>
+          </div>
+
+          <button type="submit" class="predict-btn" id="predictBtn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <span>Run Prediction</span>
+            <div class="spinner" id="spinner" style="display:none"></div>
+          </button>
+
+          <div id="error-message" class="error-banner" style="display:none"></div>
+        </form>
+      </div>
+
+      <!-- Result Panel -->
+      <div class="result-card" id="resultPanel">
+        <h2 class="section-title">Prediction Result</h2>
+
+        <div class="aqi-gauge-wrap">
+          <div class="aqi-gauge" id="aqiGauge">
+            <div class="gauge-inner">
+              <span class="gauge-val" id="aqiValue">—</span>
+              <span class="gauge-label">AQI</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="aqi-category-badge" id="aqiCategory">Waiting for input…</div>
+
+        <div class="aqi-scale">
+          <div class="scale-item"><span class="dot" style="background:#10b981"></span>0–50 Good</div>
+          <div class="scale-item"><span class="dot" style="background:#f59e0b"></span>51–100 Moderate</div>
+          <div class="scale-item"><span class="dot" style="background:#f97316"></span>101–200 Unhealthy</div>
+          <div class="scale-item"><span class="dot" style="background:#ef4444"></span>201–300 Very Unhealthy</div>
+          <div class="scale-item"><span class="dot" style="background:#991b1b"></span>300+ Hazardous</div>
+        </div>
+
+        <div class="result-model-note">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Powered by Random Forest (R² > 0.97)
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── PAGE: CITIES ─────────────────────────────── -->
+  <section class="page" id="page-cities">
+    <div class="table-card">
+      <div class="chart-header">
+        <div>
+          <h3>City-wise Pollutant Overview</h3>
+          <p>Average PM2.5 across all monitored cities</p>
+        </div>
+        <input class="search-box" id="citySearch" placeholder="Search city…" />
+      </div>
+      <div class="table-wrap">
+        <table class="data-table" id="citiesTable">
+          <thead>
+            <tr>
+              <th>#</th><th>City</th><th>State</th>
+              <th>PM2.5</th><th>PM10</th><th>NO2</th><th>SO2</th><th>OZONE</th>
+              <th>AQI Est.</th>
+            </tr>
+          </thead>
+          <tbody id="citiesBody">
+            <tr><td colspan="9" class="loading-row">Loading data…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── PAGE: POLLUTANTS ─────────────────────────── -->
+  <section class="page" id="page-pollutants">
+    <div class="pollutant-cards" id="pollutantCards">
+      <!-- Rendered by JS -->
+    </div>
+    <div class="chart-row" style="margin-top:0">
+      <div class="chart-card" style="flex:1">
+        <div class="chart-header">
+          <div><h3>Pollutant Min / Avg / Max</h3><p>Across all monitoring stations</p></div>
+        </div>
+        <div class="chart-wrap"><canvas id="pollutantDetailChart"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ═══════════ SCRIPTS ═══════════ -->
+<script>
+// ── Navigation ──────────────────────────────────────────────────────────────
+const pages  = { dashboard: 'Air Quality Overview', predict: 'AQI Predictor', cities: 'City Analysis', pollutants: 'Pollutant Breakdown' };
+const subs   = { dashboard: 'India — Real-time station monitoring', predict: 'Random Forest ML model', cities: 'All monitored cities at a glance', pollutants: 'Station-level pollutant statistics' };
+
+document.querySelectorAll('.nav-item').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    const page = btn.dataset.page;
+    document.getElementById('page-' + page).classList.add('active');
+    document.getElementById('pageTitle').textContent = pages[page];
+    document.getElementById('pageSub').textContent = subs[page];
+  });
+});
+
+// ── Palette ──────────────────────────────────────────────────────────────────
+const PAL = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316'];
+const POL_COLORS = { 'PM2.5':'#ef4444','PM10':'#f97316','NO2':'#8b5cf6','CO':'#06b6d4','SO2':'#f59e0b','OZONE':'#10b981','NH3':'#3b82f6' };
+
+// ── KPI ──────────────────────────────────────────────────────────────────────
+async function loadStats() {
+  const d = await fetch('/api/stats').then(r => r.json());
+  animateCount('kCities', d.cities || 0);
+  document.getElementById('kStates').textContent = `${d.states || 0} states`;
+  animateCount('kPm25', d.avg_pm25 || 0, 1);
+  const pm = d.avg_pm25 || 0;
+  const status = pm <= 12 ? 'Good 🟢' : pm <= 35 ? 'Moderate 🟡' : pm <= 55 ? 'Unhealthy 🟠' : 'Hazardous 🔴';
+  document.getElementById('kPm25Status').textContent = status;
+  document.getElementById('kMost').textContent = d.most_polluted || '—';
+  document.getElementById('kBest').textContent  = d.cleanest    || '—';
+}
+
+function animateCount(id, target, decimals = 0) {
+  const el = document.getElementById(id);
+  let start = 0, dur = 1200;
+  const step = ts => {
+    if (!start) start = ts;
+    const prog = Math.min((ts - start) / dur, 1);
+    el.textContent = (prog * target).toFixed(decimals);
+    if (prog < 1) requestAnimationFrame(step);
+    else el.textContent = target.toFixed ? target.toFixed(decimals) : target;
+  };
+  requestAnimationFrame(step);
+}
+
+// ── City Bar Chart ───────────────────────────────────────────────────────────
+let cityChartInst = null;
+async function loadCityChart(pollutant = 'PM2.5') {
+  const data = await fetch(`/api/top-cities?n=12&pollutant=${pollutant}`).then(r => r.json());
+  const labels = data.map(d => d.City);
+  const values = data.map(d => d.Value);
+  const color  = POL_COLORS[pollutant] || '#3b82f6';
+
+  if (cityChartInst) cityChartInst.destroy();
+  cityChartInst = new Chart(document.getElementById('cityChart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: pollutant,
+        data: values,
+        backgroundColor: labels.map((_, i) => i === 0 ? color : color + '99'),
+        borderRadius: 6,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${c.raw.toFixed(1)} µg/m³` } } },
+      scales: {
+        x: { grid: { color: '#f1f5f9' }, ticks: { color: '#94a3b8' } },
+        y: { grid: { display: false }, ticks: { color: '#334155', font: { weight: '500' } } }
+      }
+    }
+  });
+}
+
+document.querySelectorAll('.chip').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.chip').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    loadCityChart(btn.dataset.pol);
+  });
+});
+
+// ── Donut Chart ──────────────────────────────────────────────────────────────
+async function loadDonut() {
+  const data = await fetch('/api/pollutant-summary').then(r => r.json());
+  const labels = data.map(d => d.Pollutant);
+  const values = data.map(d => d.avg);
+  const colors = labels.map(l => POL_COLORS[l] || '#94a3b8');
+
+  new Chart(document.getElementById('donutChart'), {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data: values, backgroundColor: colors, borderWidth: 3, borderColor: '#fff', hoverOffset: 8 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '68%',
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${c.raw.toFixed(1)} µg/m³` } } }
+    }
+  });
+
+  const leg = document.getElementById('donutLegend');
+  leg.innerHTML = labels.map((l, i) =>
+    `<div class="dleg"><span style="background:${colors[i]}"></span>${l} <strong>${values[i].toFixed(1)}</strong></div>`
+  ).join('');
+}
+
+// ── Range Chart ──────────────────────────────────────────────────────────────
+async function loadRangeChart() {
+  const data = await fetch('/api/pollutant-summary').then(r => r.json());
+  const labels = data.map(d => d.Pollutant);
+
+  new Chart(document.getElementById('rangeChart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Min', data: data.map(d => d.min_val), backgroundColor: '#bfdbfe', borderRadius: 4 },
+        { label: 'Avg', data: data.map(d => d.avg),     backgroundColor: '#3b82f6', borderRadius: 4 },
+        { label: 'Max', data: data.map(d => d.max_val), backgroundColor: '#1e3a5f', borderRadius: 4 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#64748b', boxWidth: 12 } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#64748b' } },
+        y: { grid: { color: '#f1f5f9' }, ticks: { color: '#64748b' } }
+      }
+    }
+  });
+}
+
+// ── State Chart ──────────────────────────────────────────────────────────────
+async function loadStateChart() {
+  const data = await fetch('/api/state-summary').then(r => r.json());
+  const labels = data.map(d => d.State.replace(/_/g, ' '));
+  const values = data.map(d => d.Value);
+
+  new Chart(document.getElementById('stateChart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Avg PM (µg/m³)',
+        data: values,
+        backgroundColor: values.map(v => v > 80 ? '#ef4444' : v > 60 ? '#f97316' : v > 40 ? '#f59e0b' : '#10b981'),
+        borderRadius: 5,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: '#f1f5f9' }, ticks: { color: '#94a3b8' } },
+        y: { grid: { display: false }, ticks: { color: '#334155', font: { size: 11 } } }
+      }
+    }
+  });
+}
+
+// ── Cities Table ─────────────────────────────────────────────────────────────
+let allCityRows = [];
+async function loadCitiesTable() {
+  const [topPM25, topPM10, topNO2, topSO2, topOzone] = await Promise.all([
+    fetch('/api/top-cities?n=200&pollutant=PM2.5').then(r => r.json()),
+    fetch('/api/top-cities?n=200&pollutant=PM10').then(r => r.json()),
+    fetch('/api/top-cities?n=200&pollutant=NO2').then(r => r.json()),
+    fetch('/api/top-cities?n=200&pollutant=SO2').then(r => r.json()),
+    fetch('/api/top-cities?n=200&pollutant=OZONE').then(r => r.json()),
+  ]);
+
+  const pm25Map = Object.fromEntries(topPM25.map(d => [d.City, d.Value]));
+  const pm10Map = Object.fromEntries(topPM10.map(d => [d.City, d.Value]));
+  const no2Map  = Object.fromEntries(topNO2.map(d  => [d.City, d.Value]));
+  const so2Map  = Object.fromEntries(topSO2.map(d  => [d.City, d.Value]));
+  const o3Map   = Object.fromEntries(topOzone.map(d => [d.City, d.Value]));
+
+  const cities = [...new Set([...topPM25.map(d => d.City)])];
+  allCityRows  = cities.map(city => ({
+    city,
+    pm25:  pm25Map[city] || 0, pm10: pm10Map[city] || 0,
+    no2:   no2Map[city]  || 0, so2:  so2Map[city]  || 0,
+    ozone: o3Map[city]   || 0,
+  }));
+  renderTable(allCityRows);
+}
+
+function aqiEstimate(pm25) {
+  if (pm25 <= 12)  return { label: 'Good',           color: '#10b981' };
+  if (pm25 <= 35)  return { label: 'Moderate',       color: '#f59e0b' };
+  if (pm25 <= 55)  return { label: 'Unhealthy',      color: '#f97316' };
+  if (pm25 <= 150) return { label: 'Very Unhealthy', color: '#ef4444' };
+  return { label: 'Hazardous', color: '#991b1b' };
+}
+
+function renderTable(rows) {
+  const tbody = document.getElementById('citiesBody');
+  tbody.innerHTML = rows.map((r, i) => {
+    const est = aqiEstimate(r.pm25);
+    return `<tr>
+      <td class="row-num">${i + 1}</td>
+      <td class="city-name">${r.city}</td>
+      <td class="state-cell">India</td>
+      <td><span class="val-pill" style="background:${r.pm25 > 55 ? '#fee2e2' : '#f0fdf4'};color:${r.pm25 > 55 ? '#ef4444' : '#10b981'}">${r.pm25.toFixed(1)}</span></td>
+      <td>${r.pm10.toFixed(1)}</td>
+      <td>${r.no2.toFixed(1)}</td>
+      <td>${r.so2.toFixed(1)}</td>
+      <td>${r.ozone.toFixed(1)}</td>
+      <td><span class="status-badge" style="background:${est.color}20;color:${est.color}">${est.label}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+document.getElementById('citySearch').addEventListener('input', e => {
+  const q = e.target.value.toLowerCase();
+  renderTable(allCityRows.filter(r => r.city.toLowerCase().includes(q)));
+});
+
+// ── Pollutant Detail ─────────────────────────────────────────────────────────
+async function loadPollutantCards() {
+  const data = await fetch('/api/pollutant-summary').then(r => r.json());
+  const container = document.getElementById('pollutantCards');
+  container.innerHTML = data.map(d => {
+    const color = POL_COLORS[d.Pollutant] || '#94a3b8';
+    const pct   = Math.min((d.avg / 200) * 100, 100).toFixed(0);
+    return `<div class="pol-card">
+      <div class="pol-header" style="border-color:${color}">
+        <span class="pol-name" style="color:${color}">${d.Pollutant}</span>
+        <span class="pol-avg">${d.avg.toFixed(1)} µg/m³</span>
+      </div>
+      <div class="pol-bar-track"><div class="pol-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+      <div class="pol-range">
+        <span>Min: ${d.min_val.toFixed(1)}</span>
+        <span>Max: ${d.max_val.toFixed(1)}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  new Chart(document.getElementById('pollutantDetailChart'), {
+    type: 'radar',
+    data: {
+      labels: data.map(d => d.Pollutant),
+      datasets: [
+        { label: 'Avg',  data: data.map(d => d.avg),     fill: true,  backgroundColor: '#3b82f630', borderColor: '#3b82f6', pointBackgroundColor: '#3b82f6' },
+        { label: 'Max',  data: data.map(d => d.max_val), fill: false, borderColor: '#ef444480', borderDash: [4, 4], pointBackgroundColor: '#ef4444', pointRadius: 3 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: { r: { grid: { color: '#e2e8f0' }, ticks: { display: false }, pointLabels: { color: '#475569', font: { weight: '600' } } } },
+      plugins: { legend: { labels: { color: '#64748b' } } }
+    }
+  });
+}
+
+// ── Predict Form ─────────────────────────────────────────────────────────────
+document.getElementById('date').valueAsDate = new Date();
+
+document.getElementById('aqi-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = document.getElementById('predictBtn');
+  const sp  = document.getElementById('spinner');
+  btn.classList.add('loading');
+  sp.style.display = 'block';
+  document.getElementById('error-message').style.display = 'none';
+
+  const payload = {
+    City: document.getElementById('city').value,
+    Date: document.getElementById('date').value,
+    'PM2.5': parseFloat(document.getElementById('pm25').value),
+    PM10:    parseFloat(document.getElementById('pm10').value),
+    NO2:     parseFloat(document.getElementById('no2').value),
+    CO:      parseFloat(document.getElementById('co').value),
+    SO2:     parseFloat(document.getElementById('so2').value),
+    O3:      parseFloat(document.getElementById('o3').value),
+  };
+
+  try {
+    const res  = await fetch('/predict', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    const data = await res.json();
+    if (data.success) {
+      const gauge = document.getElementById('aqiGauge');
+      const val   = document.getElementById('aqiValue');
+      const cat   = document.getElementById('aqiCategory');
+      val.textContent  = data.aqi;
+      cat.textContent  = data.category;
+      gauge.style.setProperty('--gauge-color', data.color);
+      gauge.classList.add('has-result');
+      val.style.color  = data.color;
+      cat.style.background = data.color + '20';
+      cat.style.color      = data.color;
+    } else {
+      showError(data.error || 'Unknown error');
+    }
+  } catch {
+    showError('Connection failed. Is the server running?');
+  } finally {
+    btn.classList.remove('loading');
+    sp.style.display = 'none';
+  }
+});
+
+function showError(msg) {
+  const el = document.getElementById('error-message');
+  el.textContent    = msg;
+  el.style.display  = 'block';
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+(async () => {
+  await loadStats();
+  await Promise.all([loadCityChart(), loadDonut(), loadRangeChart(), loadStateChart()]);
+  loadCitiesTable();
+  loadPollutantCards();
+})();
+</script>
+</body>
+</html>
